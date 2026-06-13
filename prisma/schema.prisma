@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  name         String
+  email        String     @unique
+  phoneNumber  String
+  password     String
+  avatarUrl    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  bookings     Booking[]
+  favorites    Favorite[]
+  reviews      Review[]
+}
+
+model Villa {
+  id           Int        @id @default(autoincrement())
+  name         String
+  location     String
+  description  String
+  price        Float
+  capacity     Int
+  rating       Float      @default(0)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  images       VillaImage[]
+  bookings     Booking[]
+  favorites    Favorite[]
+  reviews      Review[]
+  facilities   VillaFacility[]
+}
+
+model VillaImage {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String
+
+  villaId   Int
+  villa     Villa    @relation(fields: [villaId], references: [id], onDelete: Cascade)
+}
+
+model Facility {
+  id         Int               @id @default(autoincrement())
+  name       String
+  icon       String?
+
+  villas     VillaFacility[]
+}
+
+model VillaFacility {
+  villaId     Int
+  facilityId  Int
+
+  villa       Villa     @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  facility    Facility  @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@id([villaId, facilityId])
+}
+
+model Favorite {
+  id         Int      @id @default(autoincrement())
+
+  userId     Int
+  villaId    Int
+
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  villa      Villa    @relation(fields: [villaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, villaId])
+}
+
+model Booking {
+  id          Int             @id @default(autoincrement())
+
+  userId      Int
+  villaId     Int
+
+  checkIn     DateTime
+  checkOut    DateTime
+
+  guestCount  Int
+  totalPrice  Float
+
+  status      BookingStatus   @default(PENDING)
+
+  createdAt   DateTime        @default(now())
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  villa       Villa           @relation(fields: [villaId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id          Int       @id @default(autoincrement())
+
+  rating      Int
+  comment     String
+
+  createdAt   DateTime  @default(now())
+
+  userId      Int
+  villaId     Int
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  villa       Villa     @relation(fields: [villaId], references: [id], onDelete: Cascade)
+}
+
+model Onboarding {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  imageUrl     String
+  stepOrder    Int      @unique
+}
